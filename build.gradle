@@ -1,0 +1,106 @@
+buildscript {
+	ext {
+		queryDslVersion = "5.0.0"
+	}
+}
+
+
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.3.3'
+	id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'com.archi-sub'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-web-services'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-batch'
+
+	// DB 프레임워크
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+	// MySQL
+	implementation group: 'mysql', name: 'mysql-connector-java', version: '8.0.31'
+
+	// Lombok
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	// Swagger
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2'
+
+	// [2] QueryDSL 라이브러리
+	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+	annotationProcessor "com.querydsl:querydsl-apt:${dependencyManagement.importedProperties['querydsl.version']}:jakarta"
+	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+
+	// aws
+	implementation 'io.awspring.cloud:spring-cloud-aws-s3:3.0.2'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+ext.profile = (!project.hasProperty('profile') || !profile) ? 'dev' : profile
+
+// [3] Querydsl 설정부
+def generated = 'src/main/generated'
+
+// [4] querydsl QClass 파일 생성 위치를 지정
+tasks.withType(JavaCompile) {
+	options.getGeneratedSourceOutputDirectory().set(file(generated))
+}
+
+// [5] java source set 에 querydsl QClass 위치 추가
+//sourceSets {
+//	main.java.srcDirs += [ generated ]
+//}
+
+sourceSets {
+//	generated {
+//		java.srcDir generatedSrcDir
+//	}
+	main.java.srcDirs += [ generated ]
+	main {
+		resources {
+			srcDirs "src/main/resources", "src/main/resources/profiles/${profile}"
+//			srcDirs "src/main/java", generatedSrcDir
+		}
+	}
+}
+
+// [6] gradle clean 시에 QClass 디렉토리 삭제
+clean {
+	delete file(generated)
+}
+
+tasks {
+	processResources {
+		duplicatesStrategy = org.gradle.api.file.DuplicatesStrategy.INCLUDE
+	}
+}
