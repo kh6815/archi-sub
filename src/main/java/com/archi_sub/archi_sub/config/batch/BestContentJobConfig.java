@@ -22,6 +22,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
@@ -79,8 +81,10 @@ public class BestContentJobConfig {
                 .queryString("SELECT c FROM ContentEntity as c " +
                         "JOIN c.contentLikes cl " +
                         "WHERE c.delYn = 'N' " +
+                        "AND c.createdAt >= :oneWeekAgo " + // 일주일 이내의 게시글만 조회
                         "GROUP BY c " +
                         "ORDER BY COUNT(cl) DESC")
+                .parameterValues(Collections.singletonMap("oneWeekAgo", LocalDateTime.now().minusWeeks(1))) // 파라미터로 일주일 전 시간 설정
                 .build();
     }
 
