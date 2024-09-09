@@ -4,12 +4,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionListener;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-public class CustomJobExecutionListener implements JobExecutionListener {
+public class BestContentJobExecutionListener implements JobExecutionListener {
 
     @Override
     public void beforeJob(JobExecution jobExecution) {

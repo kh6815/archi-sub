@@ -1,10 +1,9 @@
 package com.archi_sub.archi_sub.config.batch;
 
-import com.archi_sub.archi_sub.config.batch.listener.CustomJobExecutionListener;
-import com.archi_sub.archi_sub.config.batch.listener.CustomStepExceptionListener;
+import com.archi_sub.archi_sub.config.batch.listener.BestContentJobExecutionListener;
+import com.archi_sub.archi_sub.config.batch.listener.BestContentStepExceptionListener;
 import com.archi_sub.archi_sub.db.entity.content.BestContentEntity;
 import com.archi_sub.archi_sub.db.entity.content.ContentEntity;
-import com.archi_sub.archi_sub.db.entity.like.ContentLikeEntity;
 import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,8 +17,6 @@ import org.springframework.batch.item.database.JpaItemWriter;
 import org.springframework.batch.item.database.JpaPagingItemReader;
 import org.springframework.batch.item.database.builder.JpaItemWriterBuilder;
 import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,8 +38,8 @@ public class BestContentJobConfig {
 //    @Qualifier("primaryEntityManagerFactory")
 //    private EntityManagerFactory primaryEntityManagerFactory;
 
-    private final CustomJobExecutionListener customJobExecutionListener;
-    private final CustomStepExceptionListener customStepExceptionListener;
+    private final BestContentJobExecutionListener bestContentJobExecutionListener;
+    private final BestContentStepExceptionListener bestContentStepExceptionListener;
 
     @Value("${chunkSize:10}")
     private int chunkSize;
@@ -50,7 +47,7 @@ public class BestContentJobConfig {
     @Bean
     public Job bestContentJob() {
         return new JobBuilder("bestContentJob", jobRepository)
-                .listener(customJobExecutionListener)
+                .listener(bestContentJobExecutionListener)
                 .start(bestContentStep())
                 .build();
     }
@@ -58,7 +55,7 @@ public class BestContentJobConfig {
     @Bean
     public Step bestContentStep() {
         return new StepBuilder("bestContentStep", jobRepository)
-                .listener(customStepExceptionListener)
+                .listener(bestContentStepExceptionListener)
                 .<ContentEntity, BestContentEntity> chunk(chunkSize, transactionManager)
                 .reader(bestContentReader())
                 .processor(bestContentProcessor())
