@@ -7,7 +7,7 @@ buildscript {
 
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.3.3'
+	id 'org.springframework.boot' version '3.1.4'
 	id 'io.spring.dependency-management' version '1.1.6'
 }
 
@@ -58,7 +58,10 @@ dependencies {
 	// aws
 	implementation 'io.awspring.cloud:spring-cloud-aws-s3:3.0.2'
 
+	implementation 'com.google.code.findbugs:jsr305:3.0.2'
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation("org.springframework.batch:spring-batch-test")
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
@@ -95,9 +98,9 @@ sourceSets {
 }
 
 // [6] gradle clean 시에 QClass 디렉토리 삭제
-clean {
-	delete file(generated)
-}
+//clean {
+//	delete file(generated)
+//}
 
 tasks {
 	processResources {
