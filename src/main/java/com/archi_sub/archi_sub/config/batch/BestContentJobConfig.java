@@ -77,7 +77,6 @@ public class BestContentJobConfig {
                 .name("JpaBestContentReader") // Item Reader 이름을 설정하여 로그나 예외상황에 필요
                 .entityManagerFactory(entityManagerFactory)
                 .pageSize(chunkSize)
-                // TODO 현재 기준으로 일주일 안의 게시글만 조회
                 .queryString("SELECT c FROM ContentEntity as c " +
                         "JOIN c.contentLikes cl " +
                         "WHERE c.delYn = 'N' " +

@@ -27,6 +27,7 @@ public class JobScheduler {
 
     private final JobLauncher jobLauncher;
     private final Job bestContentJob;
+    private final Job deleteFileJob;
 
     @Scheduled(cron = "0 30 2 * * 1") // 매주 월요일 새벽 2시 30분
 //    @Scheduled(cron="0 */1 * * * *" , zone="Asia/Seoul")   //매1분마다
@@ -62,7 +63,35 @@ public class JobScheduler {
         }
     }
 
-//    @Scheduled(cron="0 */10 * * * *" , zone="Asia/Seoul")   //매10분마다
+    @Scheduled(cron="0 1 0 * * *" , zone="Asia/Seoul")   //매일 00:01:00
+//    @Scheduled(cron = "*/5 * * * * *", zone = "Asia/Seoul")
+    public void runDeleteFileJob() throws Exception {
+        String formatTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS")
+                .format(new Date());
+
+        JobParameters params = new JobParametersBuilder()
+                .addString("time", formatTime) // 매번 다른 파라미터로 실행
+                .toJobParameters();
+
+        try{
+            JobExecution jobExecution = jobLauncher.run(deleteFileJob, params);
+
+            while (jobExecution.isRunning()) {
+                log.info("RunDeleteFileJob...");
+            }
+
+            log.info("DeleteFileJob Execution: " + jobExecution.getStatus());
+    //            log.info("BestContentJob getJobConfigurationName: " + jobExecution.getJobConfigurationName());
+            log.info("DeleteFileJob getJobId: " + jobExecution.getJobId());
+            log.info("DeleteFileJob getExitStatus: " + jobExecution.getExitStatus());
+            log.info("DeleteFileJob getJobInstance: " + jobExecution.getJobInstance());
+            log.info("DeleteFileJob getStepExecutions: " + jobExecution.getStepExecutions());
+            log.info("DeleteFileJob getLastUpdated: " + jobExecution.getLastUpdated());
+            log.info("DeleteFileJob getFailureExceptions: " + jobExecution.getFailureExceptions());
+        } catch(JobExecutionAlreadyRunningException | JobInstanceAlreadyCompleteException | JobParametersInvalidException | JobRestartException e) {
+            log.error(e.getMessage());
+        }
+    }
 
 //    @Scheduled(cron="0 1 0 * * *" , zone="Asia/Seoul")   //매일 00:01:00
 }
