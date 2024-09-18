@@ -10,10 +10,12 @@ import com.archi_sub.archi_sub.db.entity.content.BestContentEntity;
 import com.archi_sub.archi_sub.db.entity.content.ContentEntity;
 import com.archi_sub.archi_sub.db.entity.content.ContentFileEntity;
 import com.archi_sub.archi_sub.db.entity.file.FileEntity;
+import com.archi_sub.archi_sub.db.entity.notice.NoticeFileEntity;
 import com.archi_sub.archi_sub.db.entity.user.UserFileEntity;
 import com.archi_sub.archi_sub.db.repository.content.ContentFileRepository;
 import com.archi_sub.archi_sub.db.repository.file.FileDao;
 import com.archi_sub.archi_sub.db.repository.file.FileRepository;
+import com.archi_sub.archi_sub.db.repository.notice.NoticeFileRepository;
 import com.archi_sub.archi_sub.db.repository.user.UserFileRepository;
 import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +55,7 @@ public class DeleteFileJobConfig {
     private final FileRepository fileRepository;
     private final UserFileRepository userFileRepository;
     private final ContentFileRepository contentFileRepository;
+    private final NoticeFileRepository noticeFileRepository;
 
     // 다중 DB일 경우 해당하는 타켓 entityManager를 가져와야한다.
     private final EntityManagerFactory entityManagerFactory;
@@ -69,6 +72,7 @@ public class DeleteFileJobConfig {
                 .listener(deleteFileJobExecutionListener)
                 .start(deleteUserFileStep())
                 .next(deleteContentFileStep())
+                .next(deleteNoticeFileStep())
                 .build();
     }
 
@@ -178,11 +182,65 @@ public class DeleteFileJobConfig {
                         .map(ContentFileEntity::getId)
                         .toList();
 
-                // 파일하는 파일들 가져오고
+                // 삭제하는 파일들 가져오고
                 List<FileEntity> deleteFileEntityList = fileDao.findDeleteFileByContentFileIds(deleteContentFileIdEntityList);
 
                 // file 지울때 연관관계 때매 userFile 먼저 삭제
                 contentFileRepository.deleteAllInBatch(deleteContentFileEntityList);
+
+                List<String> deleteFilePathList = deleteFileEntityList.stream()
+                        .map(FileEntity::getPath)
+                        .toList();
+                // 파일 aws 삭제
+                awsS3Service.deleteFiles(deleteFilePathList);
+
+                // 파일 삭제
+                fileRepository.deleteAllInBatch(deleteFileEntityList);
+            }
+        };
+    }
+
+    // *******************************************
+    // notice file 삭제
+
+    @Bean
+    public Step deleteNoticeFileStep() {
+        return new StepBuilder("deleteNoticeFileStep", jobRepository)
+                .listener(deleteFileStepExceptionListener)
+                .<NoticeFileEntity, NoticeFileEntity> chunk(chunkSize, transactionManager)
+                .reader(deleteNoticeFileReader())
+                .writer(deleteNoticeFileWriter())
+                .build();
+    }
+
+    @Bean
+    public JpaPagingItemReader<NoticeFileEntity> deleteNoticeFileReader() {
+        return new JpaPagingItemReaderBuilder<NoticeFileEntity>()
+                .name("JpaDeleteNoticeFileReader")
+                .entityManagerFactory(entityManagerFactory)
+                .pageSize(chunkSize)
+                .queryString("SELECT n FROM NoticeFileEntity as n " +
+                        "WHERE n.delYn = :delYn  ")
+                .parameterValues(Collections.singletonMap("delYn", BooleanFlag.Y))
+                .build();
+    }
+
+    @Bean
+    public ItemWriter<NoticeFileEntity> deleteNoticeFileWriter() {
+        return items -> {
+
+            if(!items.isEmpty()){
+                List<NoticeFileEntity> deleteNoticeFileEntityList = new ArrayList<>(items.getItems());
+
+                List<Long> deleteNoticeFileIdEntityList = items.getItems().stream()
+                        .map(NoticeFileEntity::getId)
+                        .toList();
+
+                // 삭제하는 파일들 가져오고
+                List<FileEntity> deleteFileEntityList = fileDao.findDeleteFileByNoticeFileIds(deleteNoticeFileIdEntityList);
+
+                // file 지울때 연관관계 때매 userFile 먼저 삭제
+                noticeFileRepository.deleteAllInBatch(deleteNoticeFileEntityList);
 
                 List<String> deleteFilePathList = deleteFileEntityList.stream()
                         .map(FileEntity::getPath)

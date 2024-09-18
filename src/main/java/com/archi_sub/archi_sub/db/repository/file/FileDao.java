@@ -5,6 +5,8 @@ import com.archi_sub.archi_sub.db.entity.auth.QTokenPairEntity;
 import com.archi_sub.archi_sub.db.entity.content.QContentFileEntity;
 import com.archi_sub.archi_sub.db.entity.file.FileEntity;
 import com.archi_sub.archi_sub.db.entity.file.QFileEntity;
+import com.archi_sub.archi_sub.db.entity.notice.NoticeFileEntity;
+import com.archi_sub.archi_sub.db.entity.notice.QNoticeFileEntity;
 import com.archi_sub.archi_sub.db.entity.user.QUserEntity;
 import com.archi_sub.archi_sub.db.entity.user.QUserFileEntity;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -26,6 +28,8 @@ public class FileDao {
 
     private final QContentFileEntity qContentFileEntity = QContentFileEntity.contentFileEntity;
 
+    private final QNoticeFileEntity qNoticeFileEntity = QNoticeFileEntity.noticeFileEntity;
+
     public List<FileEntity> findDeleteFileByUserFileIds(List<Long> userFileIds){
         return
                 jpaQueryFactory
@@ -41,6 +45,15 @@ public class FileDao {
                         .select(qContentFileEntity.file)
                         .from(qContentFileEntity)
                         .where(qContentFileEntity.id.in(contentFileIds))
+                        .fetch();
+    }
+
+    public List<FileEntity> findDeleteFileByNoticeFileIds(List<Long> noticeFileIds){
+        return
+                jpaQueryFactory
+                        .select(qNoticeFileEntity.file)
+                        .from(qNoticeFileEntity)
+                        .where(qNoticeFileEntity.id.in(noticeFileIds))
                         .fetch();
     }
 }
