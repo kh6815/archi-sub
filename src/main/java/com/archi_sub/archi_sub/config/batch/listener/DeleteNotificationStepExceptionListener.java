@@ -1,6 +1,5 @@
 package com.archi_sub.archi_sub.config.batch.listener;
 
-import com.archi_sub.archi_sub.db.repository.content.BestContentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.BatchStatus;
@@ -12,17 +11,11 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @RequiredArgsConstructor
 @Component
-public class BestContentStepExceptionListener implements StepExecutionListener {
-
-    private final BestContentRepository bestContentRepository;
+public class DeleteNotificationStepExceptionListener implements StepExecutionListener {
 
     @Override
     public void beforeStep(StepExecution stepExecution) {
-//        if(stepExecution.getStatus() == BatchStatus.STARTED) {
-//            log.info("chunkStep start!");
-//        }
         log.info("chunkStep starting: " + stepExecution.getStepName());
-        bestContentRepository.deleteAllInBatch();
     }
 
     @Override
